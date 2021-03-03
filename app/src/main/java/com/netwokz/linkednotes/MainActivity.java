@@ -1,42 +1,36 @@
 package com.netwokz.linkednotes;
 
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
-    FirebaseFirestore db = null;
     String TAG = "MainActivity";
-    String LIST = "list";
-    Integer currentListCountID;
-    DocumentReference myGroceryList;
-    Map<String, Object> groceryList = null;
     String[] foodArray = {"Bread", "Milk", "Beer", "Cheese", "Paper Towels", "Plates", "Cereal", "Water", "Steak", "Hot Dogs"};
+
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,76 +39,17 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if (db == null) {
-            initializeDataBase();
-        }
-        retreiveDB();
+        mDatabase = FirebaseDatabase.getInstance().getReference("Grocery/");
+
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                testDBEntry();
+                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yy 'at' h:mm:ss");
+                String currentDateAndTime = sdf.format(new Date());
+
             }
         });
-    }
-
-    public void initializeDataBase() {
-        // Access a Cloud Firestore instance from your Activity
-        FirebaseApp.initializeApp(this);
-        db = FirebaseFirestore.getInstance();
-        myGroceryList = db.collection("Lists").document("Grocery's");
-        // Retrieve list and IDs, set counter accordingly
-        retreiveDB();
-        currentListCountID = 0;
-    }
-
-    private void retreiveDB() {
-        myGroceryList.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if (document.exists()) {
-                        groceryList = document.getData();
-                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                    } else {
-                        Log.d(TAG, "No such document");
-                        groceryList = new HashMap<>();
-                    }
-                } else {
-                    Log.d(TAG, "get failed with ", task.getException());
-                }
-            }
-        });
-        Map<String, Object> groceryList = new HashMap<>();
-    }
-
-    public String generateListID() {
-        int id = currentListCountID;
-        id++;
-        currentListCountID = id;
-        return String.valueOf(id);
-    }
-
-    public int getRandomArrayEntry() {
-        Random rand = new Random();
-        return rand.nextInt(10);
-    }
-
-    public void testDBEntry() {
-//        Map<String, Object> groceryList = new HashMap<>();
-//        for (int i = 0; i < 15; i++) {
-//            groceryList.put(generateListID(), foodArray[getRandomArrayEntry()]);
-//        }
-//        myGroceryList.set(groceryList);
-        for (int i = 0; i < 15; i++) {
-            groceryList.put(generateListID(), foodArray[getRandomArrayEntry()]);
-        }
-        myGroceryList.set(groceryList);
-
-    }
-
-    public void testDBDelete(String entry) {
     }
 
     @Override

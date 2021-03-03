@@ -8,8 +8,22 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.ArrayList;
+import java.util.Random;
 
 public class SecondFragment extends Fragment {
+
+    ArrayList<GroceryListItem> mGroceryList;
+    String[] foodArray = {"Bread", "Milk", "Beer", "Cheese", "Paper Towels", "Plates", "Cereal", "Water", "Steak", "Hot Dogs"};
+    String[] names = {"Steve", "Taylor"};
+
+    private DatabaseReference mDatabase;
 
     @Override
     public View onCreateView(
@@ -23,12 +37,29 @@ public class SecondFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        view.findViewById(R.id.button_second).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(SecondFragment.this)
-                        .navigate(R.id.action_SecondFragment_to_FirstFragment);
-            }
-        });
+        mDatabase = FirebaseDatabase.getInstance().getReference("Grocery/");
+
+        RecyclerView rvGrocery = view.findViewById(R.id.rv_grocery_list);
+
+        mGroceryList = generateDemoList(20);
+
+        mDatabase.setValue(mGroceryList);
+        ItemAdapter adapter = new ItemAdapter(mGroceryList);
+        rvGrocery.setAdapter(adapter);
+        rvGrocery.setLayoutManager(new LinearLayoutManager(getContext()));
+    }
+
+    public int getRandomArrayEntry(int number) {
+        Random rand = new Random();
+        return rand.nextInt(number);
+    }
+
+    public ArrayList<GroceryListItem> generateDemoList(int numOfEntries) {
+        ArrayList<GroceryListItem> mList = new ArrayList<>();
+        for (int i = 0; i < numOfEntries; i++) {
+            GroceryListItem mListItem = new GroceryListItem(names[getRandomArrayEntry(2)], foodArray[getRandomArrayEntry(10)], false);
+            mList.add(mListItem);
+        }
+        return mList;
     }
 }
