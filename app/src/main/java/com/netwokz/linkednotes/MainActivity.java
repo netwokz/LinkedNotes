@@ -66,11 +66,20 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.action_settings:
+                return true;
+            case R.id.action_delete_db:
+                mDatabase.child("3").removeValue();
+//                mDatabase.removeValue();
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public int getRandomNumber(int number) {
+        Random rand = new Random();
+        return rand.nextInt(number);
     }
 }

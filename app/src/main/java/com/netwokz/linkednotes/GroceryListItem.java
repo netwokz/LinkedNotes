@@ -4,20 +4,26 @@ import com.google.firebase.database.IgnoreExtraProperties;
 
 @IgnoreExtraProperties
 public class GroceryListItem {
-    boolean mIsCurrent;
+    String mIsCurrent;
+    String mId;
     String mItem;
     String mPerson; //Person who originally added item
 
     public GroceryListItem() {
     }
 
-    public GroceryListItem(String name, String item, Boolean isCurrent) {
+    public GroceryListItem(String id, String name, String item, String isCurrent) {
+        mId = id;
         mPerson = name;
         mItem = item;
         mIsCurrent = isCurrent;
     }
 
-    public boolean isActive() {
+    public String getId() {
+        return mId;
+    }
+
+    public String isActive() {
         return mIsCurrent;
     }
 
