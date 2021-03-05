@@ -1,7 +1,6 @@
 package com.netwokz.linkednotes;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +14,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
+
+    interface OnClickListener {
+        void onClick(Boolean clickedItem, int position);
+    }
+
+    private OnClickListener mCallback;
+
+    public void setOnClickListener(OnClickListener callback) {
+        mCallback = callback;
+    }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView tvName;
@@ -31,16 +40,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
             tvItem.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    cbCurent.setChecked(!cbCurent.isChecked());
+//                    cbCurent.setChecked(!cbCurent.isChecked());
                 }
             });
             cbCurent = itemView.findViewById(R.id.item_checkbox);
-            cbCurent.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    cbCurent.setChecked(isChecked);
-                }
-            });
         }
     }
 
@@ -67,7 +70,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
         mNameView.setText(mItem.getPerson());
 
         CheckBox mCheckBox = holder.cbCurent;
-        mCheckBox.setChecked(mItem.isActive());
+        mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (mCallback != null)
+                    mCallback.onClick(isChecked, position + 1);
+            }
+        });
+        mCheckBox.setChecked(Boolean.parseBoolean(mItem.isActive()));
     }
 
     @Override

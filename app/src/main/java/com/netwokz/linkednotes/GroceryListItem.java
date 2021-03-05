@@ -4,6 +4,7 @@ import com.google.firebase.database.IgnoreExtraProperties;
 
 @IgnoreExtraProperties
 public class GroceryListItem {
+
     String mIsCurrent;
     String mId;
     String mItem;
@@ -17,6 +18,10 @@ public class GroceryListItem {
         mPerson = name;
         mItem = item;
         mIsCurrent = isCurrent;
+    }
+
+    public void setIsCurrent(String mIsCurrent) {
+        this.mIsCurrent = mIsCurrent;
     }
 
     public String getId() {
