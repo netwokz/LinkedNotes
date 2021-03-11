@@ -1,6 +1,8 @@
 package com.netwokz.linkednotes;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
 
     private DatabaseReference mDatabase;
 
+    SharedPreferences prefs;
+    SharedPreferences.Editor edit;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,6 +34,11 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         mDatabase = FirebaseDatabase.getInstance().getReference("Grocery/");
+
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (!prefs.getBoolean("FirstRun", false)) {
+
+        }
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
