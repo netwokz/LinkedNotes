@@ -3,11 +3,14 @@ package com.netwokz.linkednotes;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,51 +23,78 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
     SharedPreferences prefs;
     SharedPreferences.Editor edit;
 
-//    interface OnClickListener {
-//        void onClick(Boolean clickedItem, int position);
-//    }
-
-    interface OnItemClickListener {
-        void onItemClick(Boolean clickedItem, int position);
-    }
+    private final List<GroceryListItem> mGroceryLists;
 
     private final OnItemClickListener listener;
 
-//    private OnClickListener mCallback;
+    interface OnItemClickListener {
+        void onItemClick(int position);
 
-//    public void setOnClickListener(OnClickListener callback) {
-//        mCallback = callback;
-//    }
+        void onEditClick(int position);
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+        void onDeleteClick(int position);
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder implements PopupMenu.OnMenuItemClickListener {
         public TextView tvName;
         public TextView tvItem;
-        public CheckBox cbCurent;
+        public CheckBox cbCurrent;
 
         public ViewHolder(View itemView) {
-            // Stores the itemView in a public final member variable that can be used
-            // to access the context from any ViewHolder instance.
             super(itemView);
             prefs = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
             tvName = itemView.findViewById(R.id.item_name);
             tvItem = itemView.findViewById(R.id.item_item);
 
-            cbCurent = itemView.findViewById(R.id.item_checkbox);
-//            cbCurent.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//                @Override
-//                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//                    if (listener != null) {
-//                        listener.onItemClick(isChecked, getLayoutPosition());
-//
-////                        Log.d("ItemAdapter", "getLayoutPosition = " + getLayoutPosition());
-//
-//                        edit = prefs.edit();
-//                        edit.putBoolean("Checkbox" + getLayoutPosition(), isChecked);
-//                        edit.commit();
-//                    }
-//                }
-//            });
+            cbCurrent = itemView.findViewById(R.id.item_checkbox);
+            cbCurrent.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (buttonView.isPressed() && listener != null) {
+                        GroceryListItem mItem = mGroceryLists.get(getAdapterPosition());
+                        mItem.setChecked(isChecked);
+                        edit = prefs.edit();
+                        edit.putBoolean(mItem.getKey(), isChecked);
+                        edit.commit();
+                        listener.onItemClick(getAdapterPosition());
+                    }
+                }
+            });
+
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+//                Log.d("ItemAdapter", "OnLongClick item: " + position);
+                    showPopupMenu(v);
+                    return false;
+                }
+            });
+        }
+
+        public void showPopupMenu(View view) {
+            PopupMenu popupMenu = new PopupMenu(view.getContext(), view);
+            popupMenu.inflate(R.menu.menu_context);
+            popupMenu.setOnMenuItemClickListener(this);
+            popupMenu.show();
+        }
+
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.action_edit:
+                    Log.d("ItemAdapter", "OnMenuItemClick: Edit " + getAdapterPosition());
+                    listener.onEditClick(getAdapterPosition());
+                    return true;
+
+                case R.id.action_delete:
+                    Log.d("ItemAdapter", "OnMenuItemClick: Delete " + getAdapterPosition());
+                    listener.onDeleteClick(getAdapterPosition());
+                    return true;
+
+                default:
+                    return false;
+            }
         }
     }
 
@@ -75,9 +105,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
         LayoutInflater inflater = LayoutInflater.from(context);
 
         View itemView = inflater.inflate(R.layout.recycle_item_view, parent, false);
-        ViewHolder viewHolder = new ViewHolder(itemView);
 
-        return viewHolder;
+        return new ViewHolder(itemView);
     }
 
     @Override
@@ -90,34 +119,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
         TextView mNameView = holder.tvName;
         mNameView.setText(mItem.getPerson());
 
-        CheckBox mCheckBox = holder.cbCurent;
-        mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (listener != null) {
-                    listener.onItemClick(isChecked, position);
-
-//                    Log.d("ItemAdapter", "getLayoutPosition = " + position);
-
-                    edit = prefs.edit();
-                    edit.putBoolean("Checkbox" + position, isChecked);
-                    edit.commit();
-                }
-            }
-        });
-//        Log.d("ItemAdapter", "position = " + position);
-//        prefs = mCheckBox.getContext().getSharedPreferences("my_prefs", Context.MODE_PRIVATE);
-        mCheckBox.setChecked(prefs.getBoolean("Checkbox" + position, false));
-//        mCheckBox.setChecked(Boolean.parseBoolean(mItem.mIsCurrent));
+        CheckBox mCheckBox = holder.cbCurrent;
+        mCheckBox.setChecked(prefs.getBoolean(mItem.getKey(), false));
     }
 
     @Override
     public int getItemCount() {
         return mGroceryLists.size();
     }
-
-
-    private List<GroceryListItem> mGroceryLists;
 
     public ItemAdapter(List<GroceryListItem> lists, final OnItemClickListener listener) {
         mGroceryLists = lists;

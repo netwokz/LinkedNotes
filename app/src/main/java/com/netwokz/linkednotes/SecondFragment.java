@@ -22,6 +22,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Random;
 
 public class SecondFragment extends Fragment {
@@ -30,25 +32,17 @@ public class SecondFragment extends Fragment {
     String[] foodArray = {"Bread", "Milk", "Beer", "Cheese", "Paper Towels", "Plates", "Cereal", "Water", "Steak", "Hot Dogs"};
     String[] names = {"Steve", "Taylor"};
 
-    int mCount = -1;
+//    int mCount = -1;
 
-    private DatabaseReference mDatabase;
+    private DatabaseReference mDatabaseRef;
+    private ValueEventListener mDBListener;
+
     RecyclerView rvGrocery;
     ItemAdapter adapter;
 
     SharedPreferences prefs;
     SharedPreferences.Editor edit;
 
-    public void onClick(Boolean clickedItem, int position) {
-//        Log.d("SecondFragment:onClick", "Interface OnClick");
-//        Log.d("SecondFragment:onClick", "Item " + position + " " + "isChecked: " + clickedItem);
-        GroceryListItem mListItem = mGroceryList.get(position);
-        mListItem.setIsCurrent(clickedItem.toString());
-//        Log.d("SecondFragment:onClick", "mDatabase.child(String.valueOf(mCount)).child(\"active\").getKey" + " " + mDatabase.child(String.valueOf(mCount)).child("active").getKey());
-        mDatabase.child(String.valueOf(mCount)).child("active").setValue(clickedItem.toString());
-//        adapter.notifyDataSetChanged();
-//        Log.d("SecondFragment:onClick", "mCount: " + mCount);
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -59,6 +53,8 @@ public class SecondFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        mGroceryList = new ArrayList<>();
+
         FloatingActionButton fab = getActivity().findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,84 +63,70 @@ public class SecondFragment extends Fragment {
             }
         });
 
-        prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-
-        mDatabase = FirebaseDatabase.getInstance().getReference("Grocery");
-        mGroceryList = new ArrayList<>();
+        mDatabaseRef = FirebaseDatabase.getInstance().getReference("Grocery");
         rvGrocery = view.findViewById(R.id.rv_grocery_list);
-
-        mDatabase.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot snapshot1 : snapshot.getChildren()) {
-                    String mID = snapshot1.getKey();
-                    String id = snapshot1.child("id").getValue(String.class);
-                    String active = snapshot1.child("active").getValue(String.class);
-                    String item = snapshot1.child("item").getValue(String.class);
-                    String person = snapshot1.child("person").getValue(String.class);
-//                    Log.d("SecondFragment:onDataChange()", "key: " + mID + ", " + "id: " + id + ", " + "active: " + active + ", " + "item: " + item + ", " + "person: " + person);
-
-                    edit = prefs.edit();
-                    edit.putBoolean("Checkbox" + mID, Boolean.parseBoolean(active));
-                    edit.commit();
-
-                    mCount = Integer.parseInt(mID);
-
-                    if (mGroceryList.size() <= mCount) {
-                        GroceryListItem mListItem = new GroceryListItem(String.valueOf(mCount), person, item, active);
-                        mGroceryList.add(mListItem);
-                    }
-                }
-//                Log.d("SecondFragment:onDataChanged", "mCount: " + mCount);
-//                if (mCount != 0)
-//                mCount = mCount + 1;
-//                Log.d("SecondFragment:onDataChanged", "mCount: " + mCount);
-                adapter.notifyDataSetChanged();
-                rvGrocery.invalidate();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getContext(), "Fail to get data.", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         adapter = new ItemAdapter(mGroceryList, new ItemAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(Boolean clickedItem, int position) {
-//                Log.d("SecondFragment:OnItemClick", String.valueOf(clickedItem) + " " + position);
+            public void onItemClick(int position) {
                 GroceryListItem mListItem = mGroceryList.get(position);
-                mListItem.setIsCurrent(clickedItem.toString());
-//                Log.d("SecondFragment:OnItemClick", "mDatabase.child(String.valueOf(mCount)).child(\"active\").getKey" + " " + mDatabase.child(String.valueOf(mCount)).child("active").getKey());
-                mDatabase.child(String.valueOf(position)).child("active").setValue(clickedItem.toString());
-//                adapter.notifyDataSetChanged();
-//                Log.d("SecondFragment:OnItemClick", "mCount: " + mCount);
+                mDatabaseRef.child(mListItem.getKey()).child("checked").setValue(mListItem.isChecked());
+                Log.d("SecondFragment", "onItemClick" + mListItem.getKey() + ": isChecked " + mListItem.isChecked());
+            }
+
+            @Override
+            public void onEditClick(int position) {
+
+            }
+
+            @Override
+            public void onDeleteClick(int position) {
+                mDatabaseRef.child(mGroceryList.get(position).getKey()).removeValue();
             }
         });
-//        adapter.setOnClickListener(this::onClick);
+
         rvGrocery.setAdapter(adapter);
         rvGrocery.setLayoutManager(new LinearLayoutManager(getContext()));
-    }
 
-    public void getData() {
-        mDatabase.addValueEventListener(new ValueEventListener() {
+        mDatabaseRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                mGroceryList.clear();
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
-                    String mID = snapshot1.getKey();
-                    String id = snapshot1.child("id").getValue(String.class);
-                    String active = snapshot1.child("active").getValue(String.class);
-                    String item = snapshot1.child("item").getValue(String.class);
-                    String person = snapshot1.child("person").getValue(String.class);
-                    Log.d("Get Data()", "key: " + mID + ", " + "id: " + id + ", " + "active: " + active + ", " + "item: " + item + ", " + "person: " + person);
-
-                    mCount = Integer.valueOf(mID);
-                    if (mGroceryList.size() < mCount) {
-                        GroceryListItem mListItem = new GroceryListItem(String.valueOf(mCount), person, item, active);
-                        mGroceryList.add(mListItem);
-                    }
-                    adapter.notifyItemChanged(mCount);
+//                    String mID = snapshot1.getKey();
+//                    String id = snapshot1.child("id").getValue(String.class);
+//                    String active = snapshot1.child("active").getValue(String.class);
+//                    String item = snapshot1.child("item").getValue(String.class);
+//                    String person = snapshot1.child("person").getValue(String.class);
+//                    mCount = Integer.parseInt(mID);
+//                    if (mGroceryList.size() <= mCount) {
+                    prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    edit = prefs.edit();
+                    GroceryListItem mItem = snapshot1.getValue(GroceryListItem.class);
+                    mItem.setKey(snapshot1.getKey());
+                    edit.putBoolean(mItem.getKey(), mItem.isChecked());
+                    mGroceryList.add(mItem);
+                    edit.commit();
+//                    }
                 }
+
+                Collections.sort(mGroceryList, new Comparator<GroceryListItem>() {
+                    @Override
+                    public int compare(GroceryListItem o1, GroceryListItem o2) {
+                        return Boolean.compare(o1.isChecked(), o2.isChecked());
+                    }
+                });
+
+//                for (int i = 0; i < mGroceryList.size(); i++) {
+//                    GroceryListItem temp = mGroceryList.get(i);
+//                    if (temp.isChecked()) {
+//                        mGroceryList.sort();
+//                        mGroceryList.remove(i);
+//                        mGroceryList.add(mGroceryList.size(), temp);
+//                    }
+//                }
+                adapter.notifyDataSetChanged();
+//                rvGrocery.invalidate();
             }
 
             @Override
@@ -153,35 +135,19 @@ public class SecondFragment extends Fragment {
             }
         });
     }
+
 
     public int getRandomArrayEntry(int number) {
         Random rand = new Random();
         return rand.nextInt(number);
     }
 
-    public void populateDatabase(int numberOfEntries) {
-        for (int i = 0; i < numberOfEntries; i++) {
-            GroceryListItem mListItem = new GroceryListItem(String.valueOf(i + 1), names[getRandomArrayEntry(2)], foodArray[getRandomArrayEntry(10)], "false");
-            mGroceryList.add(mListItem);
-            mDatabase.child(String.valueOf(i + 1)).setValue(mListItem);
-        }
-    }
-
     public void populateDatabase() {
-        mCount++;
-//        Log.d("SecondFragment:populateDatabase", "mCount: " + mCount);
-        GroceryListItem mListItem = new GroceryListItem(String.valueOf(mCount), names[getRandomArrayEntry(2)], foodArray[getRandomArrayEntry(10)], "false");
+//        mCount++;
+        GroceryListItem mListItem = new GroceryListItem(names[getRandomArrayEntry(2)], foodArray[getRandomArrayEntry(10)]);
         mGroceryList.add(mListItem);
-        mDatabase.child(String.valueOf(mCount)).setValue(mListItem);
-        adapter.notifyDataSetChanged();
-    }
-
-    public ArrayList<GroceryListItem> generateDemoList(int numOfEntries) {
-        ArrayList<GroceryListItem> mList = new ArrayList<>();
-        for (int i = 0; i < numOfEntries; i++) {
-            GroceryListItem mListItem = new GroceryListItem(String.valueOf(i + 1), names[getRandomArrayEntry(2)], foodArray[getRandomArrayEntry(10)], "false");
-            mList.add(mListItem);
-        }
-        return mList;
+        String mId = mDatabaseRef.push().getKey();
+        mDatabaseRef.child(mId).setValue(mListItem);
+//        adapter.notifyDataSetChanged();
     }
 }

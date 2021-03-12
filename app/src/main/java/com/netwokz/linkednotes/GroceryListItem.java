@@ -1,35 +1,39 @@
 package com.netwokz.linkednotes;
 
+import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
 @IgnoreExtraProperties
 public class GroceryListItem {
 
-    String mIsCurrent;
-    String mId;
-    String mItem;
-    String mPerson; //Person who originally added item
+
+    private String mItem;
+    private boolean isChecked;
+    private String mPerson; //Person who originally added item
+    private String mKey;
 
     public GroceryListItem() {
     }
 
-    public GroceryListItem(String id, String name, String item, String isCurrent) {
-        mId = id;
+    public GroceryListItem(String name, String item) {
         mPerson = name;
         mItem = item;
-        mIsCurrent = isCurrent;
     }
 
-    public void setIsCurrent(String mIsCurrent) {
-        this.mIsCurrent = mIsCurrent;
+    public void setItem(String item) {
+        mItem = item;
     }
 
-    public String getId() {
-        return mId;
+    public void setPerson(String person) {
+        mPerson = person;
     }
 
-    public String isActive() {
-        return mIsCurrent;
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 
     public String getItem() {
@@ -38,5 +42,15 @@ public class GroceryListItem {
 
     public String getPerson() {
         return mPerson;
+    }
+
+    @Exclude
+    public String getKey() {
+        return mKey;
+    }
+
+    @Exclude
+    public void setKey(String key) {
+        mKey = key;
     }
 }

@@ -1,11 +1,14 @@
 package com.netwokz.linkednotes;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -16,12 +19,12 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EditNameDialogFragment.UserNameListener {
 
     String TAG = "MainActivity";
     String[] foodArray = {"Bread", "Milk", "Beer", "Cheese", "Paper Towels", "Plates", "Cereal", "Water", "Steak", "Hot Dogs"};
 
-    private DatabaseReference mDatabase;
+    private DatabaseReference mDatabaseRef;
 
     SharedPreferences prefs;
     SharedPreferences.Editor edit;
@@ -33,11 +36,19 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mDatabase = FirebaseDatabase.getInstance().getReference("Grocery/");
+        mDatabaseRef = FirebaseDatabase.getInstance().getReference("Grocery/");
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         if (!prefs.getBoolean("FirstRun", false)) {
 
+            // close existing dialog fragments
+            FragmentManager manager = getFragmentManager();
+            Fragment frag = manager.findFragmentByTag("fragment_edit_name");
+            if (frag != null) {
+                manager.beginTransaction().remove(frag).commit();
+            }
+            EditNameDialogFragment editNameDialog = new EditNameDialogFragment();
+            editNameDialog.show(manager, "fragment_edit_name");
         }
 
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -68,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_settings:
                 return true;
             case R.id.action_delete_db:
-                mDatabase.child("3").removeValue();
+                mDatabaseRef.child("3").removeValue();
 //                mDatabase.removeValue();
                 return true;
         }
@@ -79,5 +90,12 @@ public class MainActivity extends AppCompatActivity {
     public int getRandomNumber(int number) {
         Random rand = new Random();
         return rand.nextInt(number);
+    }
+
+    @Override
+    public void onFinishUserDialog(String user) {
+        Toast.makeText(this, "Hello, " + user, Toast.LENGTH_SHORT).show();
+        edit.putBoolean("FirstRun", false);
+        edit.apply();
     }
 }
