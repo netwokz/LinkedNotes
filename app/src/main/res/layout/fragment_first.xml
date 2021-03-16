@@ -12,7 +12,7 @@
         android:layout_centerInParent="true"
         android:text="Retrive Data"
         android:textAlignment="center"
-        android:textColor="@color/purple_500"
+        android:textColor="@color/grey_500"
         android:textSize="18sp" />
 
 </RelativeLayout>

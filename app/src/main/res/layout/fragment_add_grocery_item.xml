@@ -5,33 +5,33 @@
     android:padding="10dp">
 
     <EditText
-        android:id="@+id/textView1"
+        android:id="@+id/tv_item_add"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="45dp"
         android:autofillHints="Please enter your name..."
-        android:hint="Please enter your name..."
+        android:hint="Grocery Item..."
         android:inputType="textAutoComplete"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <Button
-        android:id="@+id/nobtn"
+        android:id="@+id/cn_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/yesbtn"
-        android:layout_alignEnd="@+id/textView1"
-        android:layout_alignBottom="@+id/yesbtn"
+        android:layout_alignBaseline="@+id/ok_button"
+        android:layout_alignEnd="@+id/tv_item_add"
+        android:layout_alignBottom="@+id/ok_button"
         android:layout_marginEnd="38dp"
         android:text="Cancel" />
 
     <Button
-        android:id="@+id/yesbtn"
+        android:id="@+id/ok_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView1"
-        android:layout_alignStart="@+id/textView1"
+        android:layout_below="@+id/tv_item_add"
+        android:layout_alignStart="@+id/tv_item_add"
         android:layout_marginStart="24dp"
         android:layout_marginTop="20dp"
         android:text="OK" />

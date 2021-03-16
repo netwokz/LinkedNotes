@@ -10,19 +10,19 @@ import android.widget.Button;
 import android.widget.TextView;
 
 
-public class EditNameDialogFragment extends DialogFragment implements View.OnClickListener {
+public class GroceryItemDialogFragment extends DialogFragment implements View.OnClickListener {
 
-    Button yes_button, no_button;
-    NameCommunicator communicator;
-    TextView etName;
-    String mName;
+    Button ok_button, cn_button;
+    ItemCommunicator itemCommunicator;
+    TextView etItem;
+    String mItem;
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
-        if (activity instanceof NameCommunicator) {
-            communicator = (NameCommunicator) getActivity();
+        if (activity instanceof ItemCommunicator) {
+            itemCommunicator = (ItemCommunicator) getActivity();
         } else {
             throw new ClassCastException(activity.toString() + " must implemenet EditNameDialogFragment.communicator");
         }
@@ -35,15 +35,15 @@ public class EditNameDialogFragment extends DialogFragment implements View.OnCli
         setCancelable(false);
         getDialog().setTitle("Title");
 
-        View view = inflater.inflate(R.layout.fragment_name, null, false);
+        View view = inflater.inflate(R.layout.fragment_add_grocery_item, null, false);
 
-        etName = view.findViewById(R.id.textView1);
-        yes_button = view.findViewById(R.id.yesbtn);
-        no_button = view.findViewById(R.id.nobtn);
+        etItem = view.findViewById(R.id.tv_item_add);
+        ok_button = view.findViewById(R.id.ok_button);
+        cn_button = view.findViewById(R.id.cn_button);
 
         // setting onclick listener for buttons
-        yes_button.setOnClickListener(this);
-        no_button.setOnClickListener(this);
+        ok_button.setOnClickListener(this);
+        cn_button.setOnClickListener(this);
 
         return view;
     }
@@ -51,21 +51,21 @@ public class EditNameDialogFragment extends DialogFragment implements View.OnCli
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.yesbtn:
+            case R.id.ok_button:
                 dismiss();
-                mName = etName.getText().toString();
-                communicator.messageName(mName);
+                mItem = etItem.getText().toString();
+                itemCommunicator.messageItem(mItem);
                 break;
 
-            case R.id.nobtn:
+            case R.id.cn_button:
                 dismiss();
-                communicator.messageName("Dialog No btn clicked");
+                itemCommunicator.messageItem("Dialog No btn clicked");
                 break;
         }
 
     }
 
-    public interface NameCommunicator {
-        void messageName(String data);
+    public interface ItemCommunicator {
+        void messageItem(String item);
     }
 }

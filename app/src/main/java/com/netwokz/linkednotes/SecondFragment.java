@@ -1,5 +1,6 @@
 package com.netwokz.linkednotes;
 
+import android.app.FragmentManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -26,7 +27,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Random;
 
-public class SecondFragment extends Fragment {
+public class SecondFragment extends Fragment implements GroceryItemDialogFragment.ItemCommunicator {
 
     ArrayList<GroceryListItem> mGroceryList;
     String[] foodArray = {"Bread", "Milk", "Beer", "Cheese", "Paper Towels", "Plates", "Cereal", "Water", "Steak", "Hot Dogs"};
@@ -42,6 +43,7 @@ public class SecondFragment extends Fragment {
 
     SharedPreferences prefs;
     SharedPreferences.Editor edit;
+    String userName;
 
 
     @Override
@@ -54,12 +56,15 @@ public class SecondFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         mGroceryList = new ArrayList<>();
+        prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        userName = prefs.getString("name", "noName");
 
         FloatingActionButton fab = getActivity().findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                populateDatabase();
+//                populateDatabase();
+                showDialog();
             }
         });
 
@@ -93,21 +98,12 @@ public class SecondFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 mGroceryList.clear();
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
-//                    String mID = snapshot1.getKey();
-//                    String id = snapshot1.child("id").getValue(String.class);
-//                    String active = snapshot1.child("active").getValue(String.class);
-//                    String item = snapshot1.child("item").getValue(String.class);
-//                    String person = snapshot1.child("person").getValue(String.class);
-//                    mCount = Integer.parseInt(mID);
-//                    if (mGroceryList.size() <= mCount) {
-                    prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
                     edit = prefs.edit();
                     GroceryListItem mItem = snapshot1.getValue(GroceryListItem.class);
                     mItem.setKey(snapshot1.getKey());
                     edit.putBoolean(mItem.getKey(), mItem.isChecked());
                     mGroceryList.add(mItem);
                     edit.commit();
-//                    }
                 }
 
                 Collections.sort(mGroceryList, new Comparator<GroceryListItem>() {
@@ -116,17 +112,7 @@ public class SecondFragment extends Fragment {
                         return Boolean.compare(o1.isChecked(), o2.isChecked());
                     }
                 });
-
-//                for (int i = 0; i < mGroceryList.size(); i++) {
-//                    GroceryListItem temp = mGroceryList.get(i);
-//                    if (temp.isChecked()) {
-//                        mGroceryList.sort();
-//                        mGroceryList.remove(i);
-//                        mGroceryList.add(mGroceryList.size(), temp);
-//                    }
-//                }
                 adapter.notifyDataSetChanged();
-//                rvGrocery.invalidate();
             }
 
             @Override
@@ -136,6 +122,11 @@ public class SecondFragment extends Fragment {
         });
     }
 
+    public void showDialog() {
+        FragmentManager manager = getActivity().getFragmentManager();
+        GroceryItemDialogFragment mydialog = new GroceryItemDialogFragment();
+        mydialog.show(manager, "mydialog");
+    }
 
     public int getRandomArrayEntry(int number) {
         Random rand = new Random();
@@ -149,5 +140,18 @@ public class SecondFragment extends Fragment {
         String mId = mDatabaseRef.push().getKey();
         mDatabaseRef.child(mId).setValue(mListItem);
 //        adapter.notifyDataSetChanged();
+    }
+
+    public void addCroceryItem(String item) {
+        Log.d("SecondFragment:addGroceryItem()", "Item: " + item);
+        GroceryListItem mListItem = new GroceryListItem(userName, item);
+        mGroceryList.add(mListItem);
+        String mId = mDatabaseRef.push().getKey();
+        mDatabaseRef.child(mId).setValue(mListItem);
+    }
+
+    @Override
+    public void messageItem(String item) {
+        addCroceryItem(item);
     }
 }
