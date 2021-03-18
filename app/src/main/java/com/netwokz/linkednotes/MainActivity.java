@@ -1,7 +1,9 @@
 package com.netwokz.linkednotes;
 
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -12,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class MainActivity extends AppCompatActivity implements EditNameDialogFragment.NameCommunicator, GroceryItemDialogFragment.ItemCommunicator {
+public class MainActivity extends AppCompatActivity implements EditNameDialogFragment.NameCommunicator, GroceryItemDialogFragment.ItemCommunicator, SharedPreferences.OnSharedPreferenceChangeListener {
 
     String TAG = "MainActivity";
 
@@ -46,23 +49,25 @@ public class MainActivity extends AppCompatActivity implements EditNameDialogFra
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        edit = prefs.edit();
+        getSystemTheme();
+        String theme = prefs.getString("theme", "MODE_NIGHT_FOLLOW_SYSTEM");
+        changeTheme(theme);
         setContentView(R.layout.activity_main);
-//        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("Grocery");
         rvGrocery = findViewById(R.id.rv_grocery_list);
 
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.registerOnSharedPreferenceChangeListener(this);
         edit = prefs.edit();
-        if (!prefs.getBoolean("FirstRun", false)) {
-            showNameDialog();
-        }
+//        if (!prefs.getBoolean("FirstRun", false)) {
+//            showNameDialog();
+//        }
 
         mGroceryList = new ArrayList<>();
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        edit = prefs.edit();
         userName = prefs.getString("name", "noName");
 
         mDatabaseRef.addValueEventListener(new ValueEventListener() {
@@ -73,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements EditNameDialogFra
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     GroceryListItem mItem = snapshot1.getValue(GroceryListItem.class);
                     mItem.setKey(snapshot1.getKey());
+                    mItem.setPerson(userName);
                     edit.putBoolean(mItem.getKey(), mItem.isChecked());
                     mGroceryList.add(mItem);
                     Log.d("MainActivity:onDataChanged", snapshot1.getKey());
@@ -104,7 +110,8 @@ public class MainActivity extends AppCompatActivity implements EditNameDialogFra
 
             @Override
             public void onEditClick(int position) {
-
+                editItemDialog(mGroceryList.get(position).getItem());
+                deleteListItem(mGroceryList.get(position).getKey());
             }
 
             @Override
@@ -123,6 +130,24 @@ public class MainActivity extends AppCompatActivity implements EditNameDialogFra
                 showItemDialog();
             }
         });
+    }
+
+    private void getSystemTheme() {
+        int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        switch (nightModeFlags) {
+            case Configuration.UI_MODE_NIGHT_YES:
+                edit.putString("theme", "UI_MODE_NIGHT_YES");
+                edit.apply();
+                break;
+            case Configuration.UI_MODE_NIGHT_NO:
+                edit.putString("theme", "UI_MODE_NIGHT_NO");
+                edit.apply();
+                break;
+            case Configuration.UI_MODE_NIGHT_UNDEFINED:
+                edit.putString("theme", "UI_MODE_NIGHT_UNDEFINED");
+                edit.apply();
+                break;
+        }
     }
 
     public void addGroceryItem(String item) {
@@ -152,6 +177,15 @@ public class MainActivity extends AppCompatActivity implements EditNameDialogFra
         mydialog.show(manager, "mydialog");
     }
 
+    public void editItemDialog(String item) {
+        FragmentManager manager = getFragmentManager();
+        Bundle data = new Bundle();
+        data.putString("item", item);
+        GroceryItemDialogFragment mydialog = new GroceryItemDialogFragment();
+        mydialog.setArguments(data);
+        mydialog.show(manager, "mydialog");
+    }
+
     @Override
     public void messageName(String user) {
         Toast.makeText(this, "Hello, " + user, Toast.LENGTH_SHORT).show();
@@ -176,6 +210,8 @@ public class MainActivity extends AppCompatActivity implements EditNameDialogFra
 
         switch (id) {
             case R.id.action_settings:
+                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(intent);
                 return true;
             case R.id.action_delete_db:
                 mDatabaseRef.child("3").removeValue();
@@ -184,5 +220,30 @@ public class MainActivity extends AppCompatActivity implements EditNameDialogFra
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void changeTheme(String theme) {
+        switch (theme) {
+            case "MODE_NIGHT_YES":
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            case "MODE_NIGHT_NO":
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+            case "MODE_NIGHT_FOLLOW_SYSTEM":
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                break;
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        userName = prefs.getString("name", "noName");
+        String temp = prefs.getString("theme", "MODE_NIGHT_FOLLOW_SYSTEM");
+        changeTheme(temp);
+    }
+
+    public void deleteListItem(String key) {
+        mDatabaseRef.child(key).removeValue();
     }
 }

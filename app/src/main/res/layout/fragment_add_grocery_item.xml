@@ -13,7 +13,7 @@
         android:layout_marginTop="45dp"
         android:autofillHints="Please enter your name..."
         android:hint="Grocery Item..."
-        android:inputType="textAutoComplete"
+        android:inputType="textCapSentences|textAutoCorrect"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <Button

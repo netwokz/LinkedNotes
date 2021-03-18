@@ -16,6 +16,7 @@ public class GroceryItemDialogFragment extends DialogFragment implements View.On
     ItemCommunicator itemCommunicator;
     TextView etItem;
     String mItem;
+    private String mEditItem;
 
     @Override
     public void onAttach(Activity activity) {
@@ -26,20 +27,28 @@ public class GroceryItemDialogFragment extends DialogFragment implements View.On
         } else {
             throw new ClassCastException(activity.toString() + " must implemenet EditNameDialogFragment.communicator");
         }
-
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         setCancelable(false);
         getDialog().setTitle("Title");
 
         View view = inflater.inflate(R.layout.fragment_add_grocery_item, null, false);
-
         etItem = view.findViewById(R.id.tv_item_add);
         ok_button = view.findViewById(R.id.ok_button);
         cn_button = view.findViewById(R.id.cn_button);
+
+        try {
+            String item = getArguments().getString("item", null);
+            if (item != null) {
+                mEditItem = item;
+                etItem.setText(mEditItem);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         // setting onclick listener for buttons
         ok_button.setOnClickListener(this);
@@ -59,10 +68,8 @@ public class GroceryItemDialogFragment extends DialogFragment implements View.On
 
             case R.id.cn_button:
                 dismiss();
-                itemCommunicator.messageItem("Dialog No btn clicked");
                 break;
         }
-
     }
 
     public interface ItemCommunicator {
